@@ -181,7 +181,8 @@ export const useCaptureStore = create<CaptureStore>((set, get) => ({
       if (!region) {
         return state
       }
-      const { [regionId]: _removed, ...restRegions } = state.regions
+      const restRegions = { ...state.regions }
+      delete restRegions[regionId]
       const page = state.pages[region.pageId]
       const updatedRegionIds = page.regionIds.filter((id) => id !== regionId)
       return {

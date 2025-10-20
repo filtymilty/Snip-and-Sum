@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useCaptureStore } from '../../state/captureStore'
 import { createId } from '../../utils/id'
 import type { CaptureToken } from '../../types/capture'
@@ -29,14 +29,16 @@ const generateMockTokens = () => {
 const processingDelay = () => randomInRange(600, 1400)
 
 export const MockOcrAgent = () => {
-  const pendingRegions = useCaptureStore((state) =>
-    Object.values(state.regions).filter((region) => region.status === 'pending'),
-  )
+  const regions = useCaptureStore((state) => state.regions)
   const setRegionStatus = useCaptureStore((state) => state.setRegionStatus)
   const updateRegionTokens = useCaptureStore((state) => state.updateRegionTokens)
 
   const processingRef = useRef(new Set<string>())
   const timeoutsRef = useRef(new Map<string, number>())
+
+  const pendingRegions = useMemo(() => {
+    return Object.values(regions).filter((region) => region.status === 'pending')
+  }, [regions])
 
   useEffect(() => {
     pendingRegions.forEach((region) => {
