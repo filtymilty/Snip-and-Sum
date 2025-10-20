@@ -51,6 +51,8 @@ export const CaptureOverlay = () => {
       .filter((region): region is NonNullable<typeof region> => Boolean(region))
   }, [page, regions])
 
+  const completedCount = useMemo(() => pageRegions.filter((region) => region.status === 'complete').length, [pageRegions])
+
   const stopStream = useCallback(() => {
     const stream = streamRef.current
     if (!stream) {
@@ -113,6 +115,12 @@ export const CaptureOverlay = () => {
         await video.play()
       } catch (error) {
         console.warn('Autoplay rejected', error)
+      }
+      if (typeof window !== 'undefined') {
+        window.setTimeout(() => {
+          window.focus()
+          video.focus?.({ preventScroll: true })
+        }, 150)
       }
     } catch (error) {
       console.error('Screen capture failed', error)
@@ -289,7 +297,13 @@ export const CaptureOverlay = () => {
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/90">
-      <video ref={videoRef} className="absolute inset-0 h-full w-full object-contain" muted playsInline />
+      <video
+        ref={videoRef}
+        className="absolute inset-0 h-full w-full object-contain"
+        muted
+        playsInline
+        tabIndex={-1}
+      />
       <div
         role="presentation"
         className="absolute inset-0 cursor-crosshair"
@@ -338,74 +352,87 @@ export const CaptureOverlay = () => {
         </div>
       </div>
 
-      <div className="pointer-events-auto absolute left-1/2 top-8 flex w-[min(560px,90vw)] -translate-x-1/2 flex-col gap-4 rounded-3xl border border-white/10 bg-slate-950/80 p-6 text-white shadow-2xl backdrop-blur">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight">Capture in progress</h2>
-            <p className="mt-1 text-sm text-white/70">
-              Share your screen, draw rectangles around each group of numbers, then press “Done selecting” in the banner (or
-              hit Enter) to start OCR.
-            </p>
-          </div>
-          <span
-            className={clsx(
-              'inline-flex h-10 min-w-[2.5rem] items-center justify-center rounded-full border border-white/10 px-3 text-xs font-semibold uppercase tracking-[0.25em] text-white/60',
-              isRequestingStream
-                ? 'bg-white/5'
-                : streamError
-                  ? 'bg-red-500/20 text-red-200'
-                  : 'bg-emerald-500/15 text-emerald-200',
-            )}
-          >
-            {isRequestingStream ? '…' : streamError ? 'ERR' : 'LIVE'}
-          </span>
-        </div>
-        <ul className="space-y-2 text-xs text-white/70">
-          {overlayHints.map((hint) => (
-            <li key={hint} className="flex items-start gap-3">
-              <span className="mt-0.5 inline-flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-brand-500/10 text-[0.6rem] font-semibold text-brand-200">
-                ★
+      <div className="pointer-events-auto absolute left-1/2 top-6 w-[min(1080px,95vw)] -translate-x-1/2 rounded-3xl border border-white/10 bg-slate-950/85 px-6 py-5 text-white shadow-2xl backdrop-blur">
+        <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+          <div className="flex flex-1 flex-col gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold tracking-tight">Capture in progress</h2>
+                <p className="text-sm text-white/70">
+                  Share your screen, draw rectangles around each group of numbers, then press “Done selecting” (or hit Enter)
+                  to start OCR.
+                </p>
+              </div>
+              <span
+                className={clsx(
+                  'inline-flex h-10 min-w-[2.5rem] items-center justify-center rounded-full border border-white/10 px-3 text-xs font-semibold uppercase tracking-[0.25em] text-white/60',
+                  isRequestingStream
+                    ? 'bg-white/5'
+                    : streamError
+                      ? 'bg-red-500/20 text-red-200'
+                      : 'bg-emerald-500/15 text-emerald-200',
+                )}
+              >
+                {isRequestingStream ? '…' : streamError ? 'ERR' : 'LIVE'}
               </span>
-              <span>{hint}</span>
-            </li>
-          ))}
-        </ul>
-
-        {streamError && (
-          <div className="rounded-2xl border border-red-500/50 bg-red-500/20 px-4 py-3 text-xs text-red-100">
-            {streamError}
+            </div>
+            <ul className="grid gap-2 text-xs text-white/70 sm:grid-cols-2 lg:grid-cols-3">
+              {overlayHints.map((hint) => (
+                <li key={hint} className="flex items-start gap-3 rounded-2xl border border-white/5 bg-white/5 px-3 py-2">
+                  <span className="mt-0.5 inline-flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-brand-500/10 text-[0.6rem] font-semibold text-brand-200">
+                    ★
+                  </span>
+                  <span>{hint}</span>
+                </li>
+              ))}
+            </ul>
+            {streamError && (
+              <div className="rounded-2xl border border-red-500/50 bg-red-500/20 px-4 py-3 text-xs text-red-100">
+                {streamError}
+              </div>
+            )}
           </div>
-        )}
-
-        <div className="flex flex-wrap items-center gap-3 text-xs text-white/70">
-          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-            Areas captured: {pageRegions.length}
-          </span>
-          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Active page: {page?.label ?? '—'}</span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <button type="button" className="button-secondary" onClick={cancelCapture}>
-            Exit capture (Esc)
-          </button>
-          {streamError && (
-            <button type="button" className="button-secondary" onClick={requestStream}>
-              Retry screen share
-            </button>
-          )}
-          <button type="button" className="button-secondary" onClick={handleUndoLast} disabled={!page || page.regionIds.length === 0}>
-            Undo last area
-          </button>
-          <button
-            type="button"
-            className="button-primary"
-            onClick={() => {
-              stopStream()
-              finishCapture()
-            }}
-          >
-            Done selecting (Enter)
-          </button>
+          <div className="flex w-full max-w-xs flex-col gap-3 md:w-72">
+            <div className="space-y-2 text-xs text-white/70">
+              <span className="block rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                Areas captured: {pageRegions.length}
+              </span>
+              <span className="block rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                Completed OCR: {completedCount} / {pageRegions.length}
+              </span>
+              <span className="block rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                Active page: {page?.label ?? '—'}
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" className="button-secondary" onClick={cancelCapture}>
+                Exit capture (Esc)
+              </button>
+              {streamError && (
+                <button type="button" className="button-secondary" onClick={requestStream}>
+                  Retry screen share
+                </button>
+              )}
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={handleUndoLast}
+                disabled={!page || page.regionIds.length === 0}
+              >
+                Undo last area
+              </button>
+              <button
+                type="button"
+                className="button-primary"
+                onClick={() => {
+                  stopStream()
+                  finishCapture()
+                }}
+              >
+                Done selecting (Enter)
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

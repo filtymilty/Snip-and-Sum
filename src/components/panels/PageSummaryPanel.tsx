@@ -1,6 +1,50 @@
 import { useMemo } from 'react'
+import { clsx } from 'clsx'
 import { useCaptureStore } from '../../state/captureStore'
-import { formatCurrency, formatDelta } from '../../utils/format'
+import { formatAmount, formatDelta } from '../../utils/format'
+import type { CaptureStatus } from '../../types/capture'
+
+const STATUS_META: Record<CaptureStatus, { label: string; tone: string; dot: string; description: string }> = {
+  idle: {
+    label: 'Idle',
+    tone: 'text-white/60',
+    dot: 'bg-white/50',
+    description: 'Awaiting capture',
+  },
+  pending: {
+    label: 'Queued',
+    tone: 'text-amber-200',
+    dot: 'bg-amber-400',
+    description: 'Queued for OCR',
+  },
+  processing: {
+    label: 'Processing',
+    tone: 'text-sky-200',
+    dot: 'bg-sky-400',
+    description: 'Running OCR…',
+  },
+  complete: {
+    label: 'Ready',
+    tone: 'text-emerald-200',
+    dot: 'bg-emerald-400',
+    description: 'Ready to review',
+  },
+  error: {
+    label: 'Error',
+    tone: 'text-rose-200',
+    dot: 'bg-rose-400',
+    description: 'Needs attention',
+  },
+}
+
+type SummaryRow = {
+  id: string
+  label: string
+  sum: number
+  count: number
+  selected: boolean
+  status: CaptureStatus
+}
 
 const PlaceholderRow = () => (
   <div className="flex items-center justify-between rounded-xl border border-dashed border-white/10 bg-white/5 px-4 py-3 text-sm text-white/60">
@@ -21,21 +65,30 @@ export const PageSummaryPanel = () => {
   const activePage = activePageId ? pages[activePageId] : undefined
   const pageTotal = activePageId ? getPageTotal(activePageId) : 0
 
-  const rows = useMemo(() => {
+  const rows = useMemo<SummaryRow[]>(() => {
     if (!activePage) {
       return []
     }
     return activePage.regionIds.map((regionId) => {
       const region = regions[regionId]
+      const status = region?.status ?? 'idle'
       return {
         id: regionId,
         label: `Area ${activePage.regionIds.indexOf(regionId) + 1}`,
         sum: region?.sum ?? 0,
         count: region?.tokens.length ?? 0,
         selected: selection.regionIds.includes(regionId),
+        status,
       }
     })
   }, [activePage, regions, selection.regionIds])
+
+  const getRowDescription = (row: SummaryRow) => {
+    if (row.status === 'complete') {
+      return `${row.count} detected values`
+    }
+    return STATUS_META[row.status].description
+  }
 
   return (
     <aside className="w-full border-t border-white/5 bg-surface/80 px-6 py-8 text-white backdrop-blur-xl lg:max-w-sm lg:border-t-0 lg:border-l">
@@ -50,7 +103,7 @@ export const PageSummaryPanel = () => {
         <div className="rounded-2xl border border-brand-500/30 bg-brand-500/10 px-4 py-3 text-sm font-medium text-brand-100 shadow-inner">
           <div className="flex items-center justify-between">
             <span>Page total</span>
-            <span className="text-base font-semibold text-white">{formatCurrency(pageTotal)}</span>
+            <span className="text-base font-semibold text-white">{formatAmount(pageTotal)}</span>
           </div>
           <div className="mt-2 flex items-center justify-between text-xs text-brand-100/70">
             <span>Selected subtotal</span>
@@ -75,9 +128,17 @@ export const PageSummaryPanel = () => {
             >
               <div className="flex items-center justify-between text-sm text-white">
                 <span className="font-medium">{row.label}</span>
-                <span className="font-semibold">{formatCurrency(row.sum)}</span>
+                <span className="font-semibold">
+                  {row.status === 'complete' ? formatAmount(row.sum) : '—'}
+                </span>
               </div>
-              <div className="mt-1 text-xs text-white/60">{row.count} detected values</div>
+              <div className="mt-1 flex items-center justify-between text-xs text-white/60">
+                <span>{getRowDescription(row)}</span>
+                <span className={clsx('inline-flex items-center gap-1 font-semibold', STATUS_META[row.status].tone)}>
+                  <span className={clsx('h-2 w-2 rounded-full', STATUS_META[row.status].dot)} />
+                  {STATUS_META[row.status].label}
+                </span>
+              </div>
             </button>
           ))}
         </div>

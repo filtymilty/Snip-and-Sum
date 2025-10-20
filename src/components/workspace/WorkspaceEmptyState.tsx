@@ -1,4 +1,4 @@
-import { formatCurrency } from '../../utils/format'
+import { formatAmount } from '../../utils/format'
 import { useCaptureStore } from '../../state/captureStore'
 
 export const WorkspaceEmptyState = () => {
@@ -30,7 +30,7 @@ export const WorkspaceEmptyState = () => {
         </div>
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-white/40">Current page total</p>
-          <p className="mt-1 text-2xl font-semibold text-white">{formatCurrency(pageTotal)}</p>
+          <p className="mt-1 text-2xl font-semibold text-white">{formatAmount(pageTotal)}</p>
         </div>
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-white/40">Next steps</p>

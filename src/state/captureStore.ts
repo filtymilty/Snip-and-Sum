@@ -3,6 +3,7 @@ import type {
   Bounds,
   CapturePage,
   CaptureRegion,
+  CaptureStatus,
   CaptureToken,
   OverlayMode,
   SelectionState,
@@ -38,7 +39,7 @@ const createRegion = (pageId: string, bounds: Bounds): CaptureRegion => {
     id,
     pageId,
     bounds,
-    status: 'idle',
+    status: 'pending',
     tokens: [],
     sum: 0,
     createdAt: timestamp,
@@ -66,6 +67,7 @@ interface CaptureStore {
   removeRegion: (regionId: string) => void
   toggleRegionSelection: (regionId: string) => void
   resetSelection: () => void
+  setRegionStatus: (regionId: string, status: CaptureStatus) => void
   getPageTotal: (pageId: string) => number
   getGrandTotal: () => number
   getSelectionTotal: () => number
@@ -195,6 +197,23 @@ export const useCaptureStore = create<CaptureStore>((set, get) => ({
         selection: {
           regionIds: state.selection.regionIds.filter((id) => id !== regionId),
           tokenIds: state.selection.tokenIds.filter((id) => !id.startsWith(`${regionId}:`)),
+        },
+      }
+    }),
+  setRegionStatus: (regionId, status) =>
+    set((state) => {
+      const region = state.regions[regionId]
+      if (!region || region.status === status) {
+        return state
+      }
+      return {
+        regions: {
+          ...state.regions,
+          [regionId]: {
+            ...region,
+            status,
+            updatedAt: Date.now(),
+          },
         },
       }
     }),
