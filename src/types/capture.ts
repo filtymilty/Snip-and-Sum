@@ -16,7 +16,7 @@ export interface CaptureToken {
   correctedByUser: boolean
 }
 
-export type CaptureStatus = 'idle' | 'pending' | 'complete' | 'error'
+export type CaptureStatus = 'idle' | 'pending' | 'processing' | 'complete' | 'error'
 
 export interface CaptureRegion {
   id: string

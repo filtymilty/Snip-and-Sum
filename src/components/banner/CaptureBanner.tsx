@@ -1,7 +1,7 @@
 import { memo, useMemo, type ButtonHTMLAttributes } from 'react'
 import { clsx } from 'clsx'
 import { useCaptureStore } from '../../state/captureStore'
-import { formatCurrency } from '../../utils/format'
+import { formatAmount } from '../../utils/format'
 
 const BannerButton = ({
   variant = 'primary',
@@ -75,8 +75,8 @@ export const CaptureBanner = memo(function CaptureBanner() {
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/60">
             <span>{overlayMode === 'capturing' ? 'Capture mode' : overlayMode === 'reviewing' ? 'Review mode' : 'Idle mode'}</span>
             <span>Selected areas: {selectionCount}</span>
-            <span>Page total: {formatCurrency(pageTotal)}</span>
-            <span>Grand total: {formatCurrency(grandTotal)}</span>
+            <span>Page total: {formatAmount(pageTotal)}</span>
+            <span>Grand total: {formatAmount(grandTotal)}</span>
           </div>
         </div>
 

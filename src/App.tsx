@@ -2,6 +2,7 @@ import { CaptureBanner } from './components/banner/CaptureBanner'
 import { CaptureOverlay } from './components/overlay/CaptureOverlay'
 import { PageSummaryPanel } from './components/panels/PageSummaryPanel'
 import { WorkspaceEmptyState } from './components/workspace/WorkspaceEmptyState'
+import { MockOcrAgent } from './components/system/MockOcrAgent'
 import { useCaptureStore } from './state/captureStore'
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
         <PageSummaryPanel />
       </div>
       {overlayMode === 'capturing' && <CaptureOverlay />}
+      <MockOcrAgent />
     </div>
   )
 }
