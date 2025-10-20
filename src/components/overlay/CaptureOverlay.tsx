@@ -350,7 +350,11 @@ export const CaptureOverlay = () => {
           <span
             className={clsx(
               'inline-flex h-10 min-w-[2.5rem] items-center justify-center rounded-full border border-white/10 px-3 text-xs font-semibold uppercase tracking-[0.25em] text-white/60',
-              isRequestingStream ? 'bg-white/5' : streamError ? 'bg-red-500/20 text-red-200' : 'bg-emerald-500/15 text-emerald-200',
+              isRequestingStream
+                ? 'bg-white/5'
+                : streamError
+                  ? 'bg-red-500/20 text-red-200'
+                  : 'bg-emerald-500/15 text-emerald-200',
             )}
           >
             {isRequestingStream ? '…' : streamError ? 'ERR' : 'LIVE'}
